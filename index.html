@@ -48,23 +48,23 @@ margin-bottom:5px;
           <h4 class="modal-title">Launch pad</h4>
         
          
-           <button type="button" class="btn btn-secondary" data-toggle="collapse" data-target="#demo3"><i class="fa fa-cog "></i> settings</button>
+           <button type="button" class="btn btn-secondary" data-toggle="collapse" data-target="#demo3"><i class="fa fa-cog "></i> settings</button></div>
   <div id="demo3" class="collapse">
     <div class="container py-3">
     <div class="card p-4 d-flex flex-column">
         <h4 class="font-weight-light mb-4">Settings</h4>
      
         
-        
-        <div class="custom-control custom-switch">
+     <div class="custom-control custom-switch">
             <input type="checkbox" checked="" class="custom-control-input" id="customSwitch1">
             <label class="custom-control-label" for="customSwitch1">Lazy loading</label> 
-            <a href="#" data-toggle="tooltip" title="Start loading your pages immediatley for faster page loads when launched"><i class="fa fa-info-circle "></i></a>
-            
+            <a href="#" data-toggle="tooltip" title="Start loading your pages immediatley for faster page loads when launched"><i class="fa fa-info-circle "></i></a>   
+        
+       </div>     
           
 
-        </div>
-        <br>
+       
+       
         <div class="custom-control custom-switch">
             <input type="checkbox" class="custom-control-input" id="customSwitch2">
             <label class="custom-control-label" for="customSwitch3">Screen share</label> <a href="#" data-toggle="tooltip" title="Hide view from this app when screen sharing"><i class="fa fa-info-circle "></i></a>
@@ -73,20 +73,21 @@ margin-bottom:5px;
         
           
             <div class="custom-control custom-switch">
-            <br>
+            
                 <input type="checkbox" checked="" class="custom-control-input" id="customSwitch4">
                 <label class="custom-control-label" for="customSwitch2">Track usage</label> <a href="#" data-toggle="tooltip" title="Track your usage of this app. visit usage insights to learn more"><i class="fa fa-info-circle "></i></a>
-            </div>
+           
+        </div>
         </div>
         
-        <br>
         
         <div class="custom-control custom-switch">
             <input type="checkbox" checked="" class="custom-control-input" id="customSwitch5">
             <label class="custom-control-label" for="customSwitch4">Launch base</label> <a href="#" data-toggle="tooltip" title="Opens or bypasses launch base"><i class="fa fa-info-circle "></i></a><span class="text-primary" id="valueOfSwitch4"></span>
         </div>
-        
-    </div>
+        <br>
+ 
+ 
     <button type="button" class="btn btn-success" data-toggle="collapse" data-target="#demo3">Save</button>
 </div>
   </div>
@@ -178,10 +179,11 @@ margin-bottom:5px;
     <br>
     Actions
     <br>
+    <div class="btn-group">
   <button type="button" class="btn btn-primary"><i class="fa fa-bookmark "></i> Stick to top</button>
     <button type="button" class="btn btn-primary"><i class="fa fa-share "></i> Share</button>
     <button type="button" class="btn btn-primary"><i class="fa fa-columns "></i> Split</button>
-    <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="#demo"><i class="fa fa-pencil "></i> Notes</button>
+    <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="#demo"><i class="fa fa-pencil "></i> Notes</button></div>
   <div id="demo" class="collapse">
     <div class="form-group">
     <label for="exampleFormControlTextarea1">Add a note, update, or change log</label>
