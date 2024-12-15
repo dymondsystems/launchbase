@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Launch Modal with Dynamic Buttons</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+  <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+  <style>
+    .btn {
+      margin-bottom: 5px;
+    }
+    .btn-sq-lg {
+      min-width: 100px !important;
+      min-height: 50px !important;
+    }
+    .dropdown-menu {
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Launch Modal with Dynamic Buttons</h2>
+
+  <!-- Button to Open the Modal -->
+  <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal">Open modal</button>
+
+  <!-- The Modal -->
+  <div class="modal fade" id="myModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h4 class="modal-title">Launch Pad</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="modal-body">
+          <div id="launch-buttons" class="mb-3">
+            <!-- Dynamically added buttons will appear here -->
+          </div>
+
+          <!-- Add/Edit Button Form -->
+          <button id="toggleFormButton" class="btn btn-success" data-toggle="collapse" data-target="#addEditButton">Add New Button</button>
+          <div id="addEditButton" class="collapse mt-3">
+            <form id="newButtonForm">
+              <div class="form-group">
+                <label for="buttonURL">Button URL:</label>
+                <input type="url" class="form-control" id="buttonURL" required>
+              </div>
+              <div class="form-group">
+                <label for="buttonName">Button Name:</label>
+                <input type="text" class="form-control" id="buttonName" required>
+              </div>
+              <div class="form-group">
+                <label>Window Size:</label><br>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="windowSize" id="sizeSmall" value="small" checked>
+                  <label class="form-check-label" for="sizeSmall">Small (600x400)</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="windowSize" id="sizeMedium" value="medium">
+                  <label class="form-check-label" for="sizeMedium">Medium</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="windowSize" id="sizeLarge" value="large">
+                  <label class="form-check-label" for="sizeLarge">Large</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="windowSize" id="sizeFull" value="full">
+                  <label class="form-check-label" for="sizeFull">Full Screen</label>
+                </div>
+              </div>
+              <div class="form-group">
+                <button type="submit" id="saveButton" class="btn btn-primary">Add</button>
+                <button type="button" id="cancelButton" class="btn btn-secondary">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const launchButtonsContainer = document.getElementById('launch-buttons');
+  const newButtonForm = document.getElementById('newButtonForm');
+  const toggleFormButton = document.getElementById('toggleFormButton');
+  const saveButton = document.getElementById('saveButton');
+  const cancelButton = document.getElementById('cancelButton');
+
+  let editingButton = null;
+
+  // Load buttons from localStorage
+  function loadButtons() {
+    const buttons = JSON.parse(localStorage.getItem('launchButtons')) || [];
+    buttons.forEach(button => createButton(button));
+  }
+
+  // Save buttons to localStorage
+  function saveButtons() {
+    const buttons = [];
+    document.querySelectorAll('.launch-button').forEach(btn => {
+      buttons.push({
+        url: btn.dataset.url,
+        name: btn.dataset.name,
+        size: btn.dataset.size
+      });
+    });
+    localStorage.setItem('launchButtons', JSON.stringify(buttons));
+  }
+
+  // Create and append a button
+  function createButton({ url, name, size }) {
+    const buttonDiv = document.createElement('div');
+    buttonDiv.className = 'btn-group mb-2';
+
+    const button = document.createElement('button');
+    button.className = 'btn btn-sq-lg btn-outline-primary launch-button';
+    button.dataset.url = url;
+    button.dataset.name = name;
+    button.dataset.size = size;
+    button.innerHTML = `<i class='fa fa-external-link'></i><br>${name}`;
+
+    // Open window on click
+    button.onclick = () => openWindow(url, size);
+
+    const dropdown = document.createElement('div');
+    dropdown.className = 'dropdown';
+    dropdown.innerHTML = `
+      <button class="btn btn-outline-secondary dropdown-toggle" data-toggle="dropdown"></button>
+      <div class="dropdown-menu">
+        <a class="dropdown-item" href="#" onclick="editButton(this)">Edit</a>
+        <a class="dropdown-item text-danger" href="#" onclick="removeButton(this)">Remove</a>
+      </div>`;
+
+    buttonDiv.appendChild(button);
+    buttonDiv.appendChild(dropdown);
+    launchButtonsContainer.appendChild(buttonDiv);
+  }
+
+  // Open a new window
+  function openWindow(url, size) {
+    let width, height, left, top;
+
+    switch (size) {
+      case 'small':
+        width = screen.width * 0.4;
+        height = screen.height * 0.4;
+        break;
+      case 'medium':
+        width = screen.width * 0.6;
+        height = screen.height * 0.6;
+        break;
+      case 'large':
+        width = screen.width * 0.8;
+        height = screen.height * 0.8;
+        break;
+      case 'full':
+        width = screen.width * 0.9;
+        height = screen.height * 0.9;
+        break;
+      default:
+        width = screen.width * 0.5;
+        height = screen.height * 0.5;
+    }
+
+    left = (screen.width - width) / 2;
+    top = (screen.height - height) / 2;
+
+    window.open(url, '_blank', `width=${width},height=${height},top=${top},left=${left}`);
+  }
+
+  // Add or edit button
+  newButtonForm.onsubmit = (e) => {
+    e.preventDefault();
+    const url = document.getElementById('buttonURL').value;
+    const name = document.getElementById('buttonName').value;
+    const size = document.querySelector('input[name="windowSize"]:checked').value;
+
+    if (editingButton) {
+      // Update existing button
+      editingButton.dataset.url = url;
+      editingButton.dataset.name = name;
+      editingButton.dataset.size = size;
+      editingButton.innerHTML = `<i class='fa fa-external-link'></i><br>${name}`;
+      editingButton = null;
+      saveButton.textContent = 'Add';
+    } else {
+      // Create new button
+      createButton({ url, name, size });
+    }
+
+    saveButtons();
+    newButtonForm.reset();
+    $('#addEditButton').collapse('hide');
+  };
+
+  // Edit button
+  function editButton(el) {
+    const button = el.closest('.btn-group').querySelector('.launch-button');
+    document.getElementById('buttonURL').value = button.dataset.url;
+    document.getElementById('buttonName').value = button.dataset.name;
+    document.querySelector(`input[value="${button.dataset.size}"]`).checked = true;
+    editingButton = button;
+    saveButton.textContent = 'Save';
+    $('#addEditButton').collapse('show');
+  }
+
+  // Remove button
+  function removeButton(el) {
+    el.closest('.btn-group').remove();
+    saveButtons();
+  }
+
+  // Cancel button
+  cancelButton.onclick = () => {
+    newButtonForm.reset();
+    editingButton = null;
+    saveButton.textContent = 'Add';
+    $('#addEditButton').collapse('hide');
+  };
+
+  // Initialize
+  loadButtons();
+</script>
+
+</body>
+</html>
