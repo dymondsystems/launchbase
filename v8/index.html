@@ -1,0 +1,178 @@
+<script>
+  const launchButtonsContainer = document.getElementById('launch-buttons');
+  const newButtonForm = document.getElementById('newButtonForm');
+  const toggleFormButton = document.getElementById('toggleFormButton');
+  const saveButton = document.getElementById('saveButton');
+  const cancelButton = document.getElementById('cancelButton');
+  const windowSizeOptions = document.getElementById('windowSizeOptions');
+
+  let editingButton = null;
+
+  // Load buttons from localStorage
+  function loadButtons() {
+    const buttons = JSON.parse(localStorage.getItem('launchButtons')) || [];
+    buttons.forEach(button => createButton(button));
+  }
+
+  // Save buttons to localStorage
+  function saveButtons() {
+    const buttons = [];
+    document.querySelectorAll('.launch-button').forEach(btn => {
+      if (btn.dataset.name !== 'Default') { // Skip saving the default button
+        buttons.push({
+          url: btn.dataset.url,
+          name: btn.dataset.name,
+          size: btn.dataset.size,
+          openType: btn.dataset.openType
+        });
+      }
+    });
+    localStorage.setItem('launchButtons', JSON.stringify(buttons));
+  }
+
+  // Create and append a button
+  function createButton({ url, name, size, openType }) {
+    const buttonDiv = document.createElement('div');
+    buttonDiv.className = 'btn-group mb-2';
+
+    const button = document.createElement('button');
+    button.className = 'btn btn-sq-lg btn-outline-primary launch-button';
+    button.dataset.url = url;
+    button.dataset.name = name;
+    button.dataset.size = size;
+    button.dataset.openType = openType;
+    button.innerHTML = `<i class='fa fa-external-link'></i><br>${name}`;
+
+    // Open window or tab on click
+    button.onclick = () => {
+      if (openType === 'newTab') {
+        window.open(url, '_blank');
+      } else {
+        openWindow(url, size);
+      }
+    };
+
+    const dropdown = document.createElement('div');
+    dropdown.className = 'dropdown';
+    dropdown.innerHTML = `
+      <button class="btn btn-outline-secondary dropdown-toggle" data-toggle="dropdown"></button>
+      <div class="dropdown-menu">
+        <a class="dropdown-item" href="#" onclick="editButton(this)">Edit</a>
+        ${name === 'Default' ? '<a class="dropdown-item text-muted" href="#" onclick="return false;" style="cursor: not-allowed;">Remove (Disabled)</a>' : '<a class="dropdown-item text-danger" href="#" onclick="removeButton(this)">Remove</a>'}
+      </div>
+    `;
+
+    buttonDiv.appendChild(button);
+    buttonDiv.appendChild(dropdown);
+    launchButtonsContainer.appendChild(buttonDiv);
+  }
+
+  // Open a new window with specified size
+  function openWindow(url, size) {
+    let width, height, left, top;
+    if (size === 'small') {
+      width = 600;
+      height = 400;
+      left = (screen.width - width) / 2;
+      top = (screen.height - height) / 2;
+    } else if (size === 'medium') {
+      width = screen.width - 450;
+      height = screen.height - 440;
+      left = 225;
+      top = 220;
+    } else if (size === 'large') {
+      width = screen.width - 275;
+      height = screen.height - 275;
+      left = 137.5;
+      top = 137.5;
+    } else if (size === 'full') {
+      width = screen.width - 55;
+      height = screen.height - 60;
+      left = 27.5;
+      top = 30;
+    }
+    window.open(url, '_blank', `width=${width},height=${height},top=${top},left=${left}`);
+  }
+
+  // Edit a button
+  function editButton(element) {
+    const button = element.closest('.btn-group').querySelector('.launch-button');
+    editingButton = button;
+
+    // Populate form with existing button details
+    document.getElementById('buttonURL').value = button.dataset.url;
+    document.getElementById('buttonName').value = button.dataset.name;
+    document.getElementById('openNewTab').checked = button.dataset.openType === 'newTab';
+    document.getElementById('openNewWindow').checked = button.dataset.openType === 'newWindow';
+    windowSizeOptions.style.display = button.dataset.openType === 'newWindow' ? 'block' : 'none';
+
+    if (button.dataset.size) {
+      document.getElementById(`size${capitalizeFirstLetter(button.dataset.size)}`).checked = true;
+    }
+
+    toggleFormButton.textContent = 'Edit Button';
+    saveButton.textContent = 'Save';
+    $('#addEditButton').collapse('show');
+  }
+
+  // Remove a button
+  function removeButton(element) {
+    const buttonGroup = element.closest('.btn-group');
+    buttonGroup.remove();
+    saveButtons();
+  }
+
+  // Reset the form
+  function resetForm() {
+    newButtonForm.reset();
+    toggleFormButton.textContent = 'Add New Button';
+    saveButton.textContent = 'Add';
+    windowSizeOptions.style.display = 'none';
+    editingButton = null;
+    $('#addEditButton').collapse('hide');
+  }
+
+  // Handle form submission
+  newButtonForm.onsubmit = (event) => {
+    event.preventDefault();
+
+    const url = document.getElementById('buttonURL').value;
+    const name = document.getElementById('buttonName').value;
+    const openType = document.querySelector('input[name="openType"]:checked').value;
+    const size = openType === 'newWindow' ? document.querySelector('input[name="windowSize"]:checked').value : null;
+
+    if (editingButton) {
+      // Update existing button
+      editingButton.dataset.url = url;
+      editingButton.dataset.name = name;
+      editingButton.dataset.openType = openType;
+      editingButton.dataset.size = size;
+      editingButton.innerHTML = `<i class='fa fa-external-link'></i><br>${name}`;
+      saveButtons();
+    } else {
+      // Add a new button
+      createButton({ url, name, size, openType });
+      saveButtons();
+    }
+
+    resetForm();
+  };
+
+  // Toggle window size options based on open type
+  document.querySelectorAll('input[name="openType"]').forEach(radio => {
+    radio.onchange = () => {
+      windowSizeOptions.style.display = document.getElementById('openNewWindow').checked ? 'block' : 'none';
+    };
+  });
+
+  // Handle cancel button click
+  cancelButton.onclick = resetForm;
+
+  // Load buttons on page load
+  loadButtons();
+
+  // Utility function to capitalize first letter
+  function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  }
+</script>
