@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Launch Modal with Dynamic Buttons</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+  <!-- FontAwesome for icons -->
+  <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+  
+  <style>
+    .btn {
+      margin-bottom: 5px;
+    }
+    .btn-sq-lg {
+      min-width: 100px !important;
+      min-height: 50px !important;
+    }
+    .dropdown-menu {
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Launch Modal with Dynamic Buttons</h2>
+
+  <!-- Buttons to Open Modals -->
+  <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal" data-modal="1">Open Modal 1</button>
+  <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal" data-modal="2">Open Modal 2</button>
+  <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal" data-modal="3">Open Modal 3</button>
+
+  <!-- The Modal -->
+  <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="modalTitle" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h4 class="modal-title" id="modalTitle">Launch Pad</h4>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="modal-body" id="modalBody">
+          <!-- Dynamically added buttons will appear here -->
+          <div id="launch-buttons" class="mb-3">
+            <!-- Buttons content will go here -->
+          </div>
+
+          <!-- Add/Edit Button Form -->
+          <button id="toggleFormButton" class="btn btn-success" data-toggle="collapse" data-target="#addEditButton">Add New Button</button>
+          <div id="addEditButton" class="collapse mt-3">
+            <form id="newButtonForm">
+              <div class="form-group">
+                <label for="buttonURL">Button URL:</label>
+                <input type="url" class="form-control" id="buttonURL" required>
+              </div>
+              <div class="form-group">
+                <label for="buttonName">Button Name:</label>
+                <input type="text" class="form-control" id="buttonName" required>
+              </div>
+              <div class="form-group">
+                <label>Open Link:</label><br>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="openType" id="openNewTab" value="newTab" checked>
+                  <label class="form-check-label" for="openNewTab">In New Tab</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="openType" id="openNewWindow" value="newWindow">
+                  <label class="form-check-label" for="openNewWindow">In New Window</label>
+                </div>
+              </div>
+              <div id="windowSizeOptions" style="display:none;">
+                <div class="form-group">
+                  <label>Window Size:</label><br>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="windowSize" id="sizeSmall" value="small" checked>
+                    <label class="form-check-label" for="sizeSmall">Small (600x400)</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="windowSize" id="sizeMedium" value="medium">
+                    <label class="form-check-label" for="sizeMedium">Medium</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="windowSize" id="sizeLarge" value="large">
+                    <label class="form-check-label" for="sizeLarge">Large</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="windowSize" id="sizeFull" value="full">
+                    <label class="form-check-label" for="sizeFull">Full Screen</label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <button type="submit" id="saveButton" class="btn btn-primary">Add</button>
+                <button type="button" id="cancelButton" class="btn btn-secondary">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<!-- Popper.js (required for Bootstrap tooltips and popovers) -->
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// Select modal-related elements
+const launchButtonsContainer = document.getElementById('launch-buttons');
+const newButtonForm = document.getElementById('newButtonForm');
+const toggleFormButton = document.getElementById('toggleFormButton');
+const saveButton = document.getElementById('saveButton');
+const cancelButton = document.getElementById('cancelButton');
+let currentModal = null;
+let editingButton = null;
+
+// Load buttons for a specific modal
+function loadButtons(modalId) {
+  launchButtonsContainer.innerHTML = '';  // Clear current buttons
+  
+  const buttons = JSON.parse(localStorage.getItem(`launchButtons_${modalId}`)) || [];
+  buttons.forEach(button => createButton(button));
+}
+
+// Save buttons for a specific modal
+function saveButtons(modalId) {
+  const buttons = [];
+  document.querySelectorAll('.launch-button').forEach(btn => {
+    buttons.push({
+      url: btn.dataset.url,
+      name: btn.dataset.name,
+      size: btn.dataset.size,
+      openType: btn.dataset.openType
+    });
+  });
+  localStorage.setItem(`launchButtons_${modalId}`, JSON.stringify(buttons));
+}
+
+// Create and append a button to the modal
+function createButton({ url, name, size, openType }) {
+  const buttonDiv = document.createElement('div');
+  buttonDiv.className = 'btn-group mb-2';
+
+  const button = document.createElement('button');
+  button.className = 'btn btn-sq-lg btn-outline-primary launch-button';
+  button.dataset.url = url;
+  button.dataset.name = name;
+  button.dataset.size = size;
+  button.dataset.openType = openType;
+  button.innerHTML = `<i class='fa fa-external-link'></i><br>${name}`;
+
+  button.onclick = () => {
+    if (openType === 'newTab') {
+      window.open(url, '_blank');
+    } else {
+      openWindow(url, size);
+    }
+  };
+
+  const dropdown = document.createElement('div');
+  dropdown.className = 'dropdown';
+  dropdown.innerHTML = `
+    <button class="btn btn-outline-secondary dropdown-toggle" data-toggle="dropdown"></button>
+    <div class="dropdown-menu">
+      <a class="dropdown-item" href="#" onclick="editButton(this)">Edit</a>
+      <a class="dropdown-item text-danger" href="#" onclick="removeButton(this)">Remove</a>
+    </div>`;
+
+  buttonDiv.appendChild(button);
+  buttonDiv.appendChild(dropdown);
+  launchButtonsContainer.appendChild(buttonDiv);
+}
+
+// Open a new window based on the selected size
+function openWindow(url, size) {
+  let width, height, left, top;
+
+  switch (size) {
+    case 'small':
+      width = screen.width * 0.4;
+      height = screen.height * 0.4;
+      break;
+    case 'medium':
+      width = screen.width * 0.6;
+      height = screen.height * 0.6;
+      break;
+    case 'large':
+      width = screen.width * 0.8;
+      height = screen.height * 0.8;
+      break;
+    case 'full':
+      width = screen.width * 1.0;
+      height = screen.height * 1.0;
+      break;
+    default:
+      width = screen.width * 0.5;
+      height = screen.height * 0.5;
+  }
+
+  left = (screen.width - width) / 2;
+  top = (screen.height - height) / 2;
+
+  window.open(url, '_blank', `width=${width},height=${height},top=${top},left=${left}`);
+}
+
+// Add or edit button
+newButtonForm.onsubmit = (e) => {
+  e.preventDefault();
+  const url = document.getElementById('buttonURL').value;
+  const name = document.getElementById('buttonName').value;
+  const size = document.querySelector('input[name="windowSize"]:checked').value;
+  const openType = document.querySelector('input[name="openType"]:checked').value;
+
+  if (editingButton) {
+    // Update existing button
+    editingButton.dataset.url = url;
+    editingButton.dataset.name = name;
+    editingButton.dataset.size = size;
+    editingButton.dataset.openType = openType;
+    editingButton.innerHTML = `<i class='fa fa-external-link'></i><br>${name}`;
+    editingButton = null;
+    saveButton.textContent = 'Add';
+  } else {
+    // Create new button
+    createButton({ url, name, size, openType });
+  }
+
+  // Save the updated buttons and refresh the list
+  saveButtons(currentModal);
+  loadButtons(currentModal);
+  newButtonForm.reset();
+  $('#addEditButton').collapse('hide');
+};
+
+// Edit button
+function editButton(el) {
+  const button = el.closest('.btn-group').querySelector('.launch-button');
+  document.getElementById('buttonURL').value = button.dataset.url;
+  document.getElementById('buttonName').value = button.dataset.name;
+  document.querySelector(`input[value="${button.dataset.size}"]`).checked = true;
+  document.querySelector(`input[value="${button.dataset.openType}"]`).checked = true;
+  editingButton = button;
+  saveButton.textContent = 'Save';
+  $('#addEditButton').collapse('show');
+}
+
+// Remove button
+function removeButton(el) {
+  el.closest('.btn-group').remove();
+  saveButtons(currentModal);
+  loadButtons(currentModal);
+}
+
+// Cancel button
+cancelButton.onclick = () => {
+  newButtonForm.reset();
+  editingButton = null;
+  saveButton.textContent = 'Add';
+  $('#addEditButton').collapse('hide');
+};
+
+// Open modal
+$('#myModal').on('show.bs.modal', function (e) {
+  currentModal = $(e.relatedTarget).data('modal'); // Get modal ID
+  loadButtons(currentModal);
+});
+
+// Initialize
+$('#myModal').on('hidden.bs.modal', function () {
+  editingButton = null;
+  saveButton.textContent = 'Add';
+  $('#addEditButton').collapse('hide');
+});
+</script>
+<script>
+const openTypeRadios = document.querySelectorAll('input[name="openType"]');
+const windowSizeOptions = document.getElementById('windowSizeOptions'); // The div containing window size options
+
+// Function to toggle window size options based on the "Open Link" choice
+function toggleWindowSizeOptions() {
+  const openType = document.querySelector('input[name="openType"]:checked').value;
+
+  if (openType === 'newWindow') {
+    windowSizeOptions.style.display = 'block'; // Show window size options
+  } else {
+    windowSizeOptions.style.display = 'none'; // Hide window size options
+  }
+}
+
+// Listen for changes in the "Open Link" radio buttons
+openTypeRadios.forEach(radio => {
+  radio.addEventListener('change', toggleWindowSizeOptions);
+});
+
+// Call the toggle function on page load to set the initial state
+toggleWindowSizeOptions();
+</script>
+
+<script>
+// Load buttons for a specific modal
+function loadButtons(modalId) {
+  launchButtonsContainer.innerHTML = '';  // Clear current buttons
+  
+  // Predefined buttons for each modal
+  const predefinedButtons = {
+    1: [
+      { url: 'https://www.example.com', name: 'Example Button 1', size: 'small', openType: 'newTab' }
+    ],
+    2: [
+      { url: 'https://www.example.com', name: 'Example Button 2', size: 'medium', openType: 'newTab' }
+    ],
+    3: [
+      { url: 'https://www.example.com', name: 'Example Button 3', size: 'large', openType: 'newTab' }
+    ]
+  };
+
+  // Get the predefined buttons for the current modal
+  const buttons = predefinedButtons[modalId] || [];
+  
+  // Create buttons from predefined list
+  buttons.forEach(button => createButton(button));
+
+  // Optionally, you can load saved buttons from localStorage as well
+  const savedButtons = JSON.parse(localStorage.getItem(`launchButtons_${modalId}`)) || [];
+  savedButtons.forEach(button => createButton(button));
+}
+
+// Create and append a button to the modal
+function createButton({ url, name, size, openType }) {
+  const buttonDiv = document.createElement('div');
+  buttonDiv.className = 'btn-group mb-2';
+
+  const button = document.createElement('button');
+  button.className = 'btn btn-sq-lg btn-outline-primary launch-button';
+  button.dataset.url = url;
+  button.dataset.name = name;
+  button.dataset.size = size;
+  button.dataset.openType = openType;
+  button.innerHTML = `<i class='fa fa-external-link'></i><br>${name}`;
+
+  button.onclick = () => {
+    if (openType === 'newTab') {
+      window.open(url, '_blank');
+    } else {
+      openWindow(url, size);
+    }
+  };
+
+  const dropdown = document.createElement('div');
+  dropdown.className = 'dropdown';
+  dropdown.innerHTML = `
+    <button class="btn btn-outline-secondary dropdown-toggle" data-toggle="dropdown"></button>
+    <div class="dropdown-menu">
+      <a class="dropdown-item" href="#" onclick="editButton(this)">Edit</a>
+      <a class="dropdown-item text-danger" href="#" onclick="removeButton(this)">Remove</a>
+    </div>`;
+
+  buttonDiv.appendChild(button);
+  buttonDiv.appendChild(dropdown);
+  launchButtonsContainer.appendChild(buttonDiv);
+}
+
+</script>
+
+</body>
+</html>
