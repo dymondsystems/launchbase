@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Launch Modal with Dynamic Buttons</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+  <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+  <style>
+    .btn {
+      margin-bottom: 5px;
+    }
+    .btn-sq-lg {
+      min-width: 100px !important;
+      min-height: 50px !important;
+    }
+    .dropdown-menu {
+      text-align: left;
+    }
+    .sizing-options {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Manage Your Sites</h2>
+
+  <!-- Example Cards for Different Sites -->
+  <div class="row">
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Site 1</h5>
+          <p class="card-text">Manage links for Site 1.</p>
+          <button class="btn btn-primary open-modal-btn" 
+                  data-site-id="site1" 
+                  data-site-name="Site 1" 
+                  data-link-type="type1" 
+                  data-toggle="modal" 
+                  data-target="#myModal">Manage Site 1</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Site 2</h5>
+          <p class="card-text">Manage links for Site 2.</p>
+          <button class="btn btn-primary open-modal-btn" 
+                  data-site-id="site2" 
+                  data-site-name="Site 2" 
+                  data-link-type="type2" 
+                  data-toggle="modal" 
+                  data-target="#myModal">Manage Site 2</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Site 3</h5>
+          <p class="card-text">Manage links for Site 3.</p>
+          <button class="btn btn-primary open-modal-btn" 
+                  data-site-id="site3" 
+                  data-site-name="Site 3" 
+                  data-link-type="type3" 
+                  data-toggle="modal" 
+                  data-target="#myModal">Manage Site 3</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reusable Modal -->
+  <div class="modal fade" id="myModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h4 class="modal-title" id="modalTitle">Manage Links</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="modal-body">
+          <div id="links-container"></div>
+          <button id="addNewLinkButton" class="btn btn-success">Add New Link</button>
+          <div id="addLinkForm" class="collapse mt-3">
+            <form>
+              <div class="form-group">
+                <label for="linkUrl">URL:</label>
+                <input type="url" class="form-control" id="linkUrl" required>
+              </div>
+              <div class="form-group">
+                <label for="linkName">Name:</label>
+                <input type="text" class="form-control" id="linkName" required>
+              </div>
+              <div class="form-group">
+                <label for="linkType">Type:</label>
+                <select id="linkType" class="form-control">
+                  <option value="newTab">New Tab</option>
+                  <option value="newWindow">New Window</option>
+                </select>
+              </div>
+              <div class="form-group sizing-options">
+                <label for="windowWidth">Width:</label>
+                <input type="number" class="form-control" id="windowWidth" placeholder="e.g., 800">
+                <label for="windowHeight">Height:</label>
+                <input type="number" class="form-control" id="windowHeight" placeholder="e.g., 600">
+              </div>
+              <button type="submit" id="saveButton" class="btn btn-primary">Save</button>
+              <button type="button" class="btn btn-secondary" id="cancelNewLinkButton">Cancel</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const linksDataKey = "siteLinksData";
+  const linksData = JSON.parse(localStorage.getItem(linksDataKey)) || {};
+
+  const modal = document.getElementById("myModal");
+  const modalTitle = document.getElementById("modalTitle");
+  const linksContainer = document.getElementById("links-container");
+  const addNewLinkButton = document.getElementById("addNewLinkButton");
+  const addLinkForm = document.getElementById("addLinkForm");
+  const linkUrlInput = document.getElementById("linkUrl");
+  const linkNameInput = document.getElementById("linkName");
+  const linkTypeSelect = document.getElementById("linkType");
+  const saveButton = document.getElementById("saveButton");
+  const sizingOptions = document.querySelector(".sizing-options");
+  const windowWidthInput = document.getElementById("windowWidth");
+  const windowHeightInput = document.getElementById("windowHeight");
+
+  let currentSiteId = null;
+  let editIndex = null;
+
+  document.querySelectorAll(".open-modal-btn").forEach(button => {
+    button.addEventListener("click", () => {
+      currentSiteId = button.dataset.siteId;
+      const siteName = button.dataset.siteName;
+      const linkType = button.dataset.linkType;
+
+      modalTitle.textContent = `Manage Links for ${siteName}`;
+      loadLinksForSite(currentSiteId);
+    });
+  });
+
+  linkTypeSelect.addEventListener("change", () => {
+    if (linkTypeSelect.value === "newWindow") {
+      sizingOptions.style.display = "block";
+    } else {
+      sizingOptions.style.display = "none";
+    }
+  });
+
+  function loadLinksForSite(siteId) {
+    linksContainer.innerHTML = "";
+    const siteLinks = linksData[siteId] || [];
+
+    siteLinks.forEach((link, index) => {
+      const linkDiv = document.createElement("div");
+      linkDiv.className = "mb-2 d-flex align-items-center justify-content-between";
+
+      const linkInfo = document.createElement("div");
+      linkInfo.textContent = `${link.name} (${link.url})`;
+      linkDiv.appendChild(linkInfo);
+
+      const actionsDiv = document.createElement("div");
+
+      const editButton = document.createElement("button");
+      editButton.className = "btn btn-warning btn-sm ml-2";
+      editButton.textContent = "Edit";
+      editButton.onclick = () => editLink(siteId, index);
+      actionsDiv.appendChild(editButton);
+
+      const deleteButton = document.createElement("button");
+      deleteButton.className = "btn btn-danger btn-sm ml-2";
+      deleteButton.textContent = "Delete";
+      deleteButton.onclick = () => deleteLink(siteId, index);
+      actionsDiv.appendChild(deleteButton);
+
+      linkDiv.appendChild(actionsDiv);
+      linksContainer.appendChild(linkDiv);
+    });
+  }
+
+  addNewLinkButton.addEventListener("click", () => {
+    editIndex = null;
+    linkUrlInput.value = "";
+    linkNameInput.value = "";
+    linkTypeSelect.value = "newTab";
+    windowWidthInput.value = "";
+    windowHeightInput.value = "";
+    sizingOptions.style.display = "none";
+    saveButton.textContent = "Add";
+    addLinkForm.classList.add("show");
+  });
+
+  addLinkForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    const url = linkUrlInput.value;
+    const name = linkNameInput.value;
+    const type = linkTypeSelect.value;
+    const width = windowWidthInput.value;
+    const height = windowHeightInput.value;
+
+    if (!url || !name) return;
+
+    if (!linksData[currentSiteId]) {
+      linksData[currentSiteId] = [];
+    }
+
+    if (editIndex !== null) {
+      linksData[currentSiteId][editIndex] = { url, name, type, width, height };
+    } else {
+      linksData[currentSiteId].push({ url, name, type, width, height });
+    }
+
+    localStorage.setItem(linksDataKey, JSON.stringify(linksData));
+
+    linkUrlInput.value = "";
+    linkNameInput.value = "";
+    linkTypeSelect.value = "newTab";
+    windowWidthInput.value = "";
+    windowHeightInput.value = "";
+    sizingOptions.style.display = "none";
+    addLinkForm.classList.remove("show");
+
+    loadLinksForSite(currentSiteId);
+  });
+
+  function editLink(siteId, index) {
+    editIndex = index;
+    const link = linksData[siteId][index];
+    linkUrlInput.value = link.url;
+    linkNameInput.value = link.name;
+    linkTypeSelect.value = link.type || "newTab";
+    windowWidthInput.value = link.width || "";
+    windowHeightInput.value = link.height || "";
+    sizingOptions.style.display = link.type === "newWindow" ? "block" : "none";
+    saveButton.textContent = "Save";
+    addLinkForm.classList.add("show");
+  }
+
+  document.getElementById("cancelNewLinkButton").addEventListener("click", () => {
+    addLinkForm.classList.remove("show");
+    editIndex = null;
+  });
+
+  function deleteLink(siteId, index) {
+    linksData[siteId].splice(index, 1);
+    localStorage.setItem(linksDataKey, JSON.stringify(linksData));
+    loadLinksForSite(siteId);
+  }
+</script>
+
+</body>
+</html>
